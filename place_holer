@@ -1,0 +1,83 @@
+#!/usr/bin/python
+import urllib2
+import urllib
+import json
+
+ENCODING = 'utf-8'
+
+def main():
+  HOST = 'http://127.0.0.1:8000/sensor'
+  PORT = '8000'
+  values = {'isbn' : '9780131185838',
+          'catalogId' : '10001',
+          'schoolStoreId' : '15828',
+          'search' : 'Search'}
+  print get(HOST+":"+PORT)
+  print post(HOST+":"+PORT,values)
+
+
+def get(url):
+  req = urllib2.Request(url)
+  res = urllib2.urlopen(req)
+  return json.loads(res.read().decode(ENCODING))
+
+def post(url, data):
+  data = urllib.urlencode(data)
+  req = urllib2.Request(url,data)
+  res = urllib2.urlopen(req)
+  return json.loads(res.read().decode(ENCODING))
+
+if __name__ == '__main__':
+  main()
+
+[-- Attachment #3: command_server.py --]
+[-- Type: text/x-python, Encoding: base64, Size: 1.6K --]
+
+#!/usr/bin/python
+import sys
+import BaseHTTPServer
+import json
+ENCODING = 'utf-8'
+
+class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def do_POST(self):
+      self.send_response(200)
+      self.send_header('Content-type','application/json')
+      self.end_headers()
+
+      content_length = int(self.headers['Content-Length'])
+      content = self.rfile.read(content_length)
+      content = parsePostString(content)
+
+      ##STUB-- Do stuff when post occures
+      ##Write the Post Data Back to the client
+      self.wfile.write(json.dumps(content).encode(ENCODING))
+
+
+ def do_GET(self):
+      self.send_response(200)
+      self.send_header('Content-type','application/json')
+      self.end_headers()
+
+      ##WRITE GET RESPONSE##
+      self.wfile.write(json.dumps({"Hello":"World"}))
+
+
+def parsePostString(s):
+  mapping = dict()
+  for key,val in [x.split("=") for x in s.split("&")]:
+    mapping[key] = val
+  return mapping
+
+
+def main():
+  PORT =  8000
+  server_class= BaseHTTPServer.HTTPServer
+  handler_class= Handler
+  server_address = ('', 8000)
+  httpd = server_class(server_address, handler_class)
+  httpd.serve_forever()
+
+
+if __name__ == '__main__':
+  main()
